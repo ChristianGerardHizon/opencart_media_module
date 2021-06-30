@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+    <name>Media Extension</name>
+    <code>echo-media-extension</code>
+    <version>1.0</version>
+    <author>Christian Gerard Hizon</author>
+    <link>christian.stratiumsoftware.com</link>
+
+    <!-- 
+
+        Admin View
+
+     -->
+     <file path="admin/view/template/catalog/product_form.twig">
+        <operation>
+            <search>
+                <![CDATA[
+                    <li><a href="#tab-design" data-toggle="tab">{{ tab_design }}</a></li>
+                ]]>
+            </search>
+
+            <add position="after">
+                <![CDATA[
+                    <li><a href="#tab-media" data-toggle="tab">{{ tab_media }}</a></li>
+                ]]>
+            </add>
+            
+        </operation>
+    </file>
+
+    <file path="admin/view/template/catalog/product_form.twig">
+        <operation>
+            <search>
+                <![CDATA[
+            </div>
+        </form>
+      </div>
+    </div>
+  </div>
+                ]]>
+            </search>
+
+            <add position="before">
+                <![CDATA[
+                {# 
+            
+                    Media
+      
+                   #}
+                  <div class="tab-pane" id="tab-media">
+                    <div class="form-group">
+                      <label class="col-sm-2 control-label" for="input-preview-audio"><span data-toggle="tooltip" title="{{ help_manufacturer }}">{{ entry_audio }}</span></label>
+                      <div class="col-sm-10">
+                        <input type="text" name="audio" value="{{ audio }}" placeholder="{{ entry_audio }}" id="input-preview-audio" class="form-control"/> 
+                        <input type="hidden" name="audio_id" value="{{ audio_id }}"/>
+                      </div>
+                    </div>
+                  </div>            
+                    ]]>
+            </add>
+            
+        </operation>
+    </file>
+
+    <file path="admin/view/template/catalog/product_form.twig">
+        <operation>
+            <search>
+                <![CDATA[
+                // Manufacturer
+                ]]>
+            </search>
+
+            <add position="before">
+                <![CDATA[
+                // Audio
+                $('input[name=\'audio\']').autocomplete({
+                    'source': function(request, response) {
+                        $.ajax({
+                            url: 'index.php?route=catalog/media/autocomplete&user_token={{ user_token }}&filter_name=' + encodeURIComponent(request),
+                            dataType: 'json',
+                      error: function(errMsg) {
+                              console.log(JSON.stringify(errMsg));
+                      },
+                            success: function(json) {
+                        console.log(json)
+                                response($.map(json, function(item) {
+                                    return {
+                                        label: item['name'],
+                                        value: item['download_id']
+                                    }
+                                }));
+                            }
+                        });
+                    },
+                    'select': function(item) {
+                        $('input[name=\'audio\']').val(item['label']);
+                        $('input[name=\'audio_id\']').val(item['value']);
+                    }                ]]>
+            </add>
+            
+        </operation>
+    </file>
+
+
+    <!-- 
+
+        Admin Language
+
+     -->
+    <file path="admin/language/en-gb/catalog/product.php">
+        <operation>
+            <search>
+                <![CDATA[
+                    $_['entry_manufacturer']     = 'Manufacturer';
+                ]]>
+            </search>
+
+            <add position="after">
+                <![CDATA[
+                    $_['entry_audio']            = 'Audio';
+                ]]>
+            </add>
+            
+        </operation>
+    </file>
+    <!-- 
+    
+
+        Admin Model 
+    
+
+    -->
+    <file path="admin/model/setting/setting.php">
+        <operation>
+            <search>
+                <![CDATA[
+                    if (isset($this->request->post['audio_id'])) {
+                ]]>
+            </search>
+            <add position="before">
+                <![CDATA[ 
+                
+                //  audio
+                if (isset($this->request->post['audio_id'])) {
+                    $data['audio_id'] = $this->request->post['audio_id'];
+                } elseif (!empty($product_info)) {
+                    $data['audio_id'] = $product_info['audio_id'];
+                } else {
+                    $data['audio_id'] = 0;
+                }
+                
+                if (isset($this->request->post['audio'])) {
+                    $data['audio'] = $this->request->post['audio'];
+                } elseif (!empty($product_info)) {
+                    $audio_info = $this->model_catalog_download->getDownload($product_info['audio_id']);
+                    if ($audio_info) {
+                        $data['audio'] = $audio_info['name'];
+                    } else {
+                        $data['audio'] = '';
+                    }
+                } else {
+                    $data['audio'] = '';
+                }
+
+                
+                ]]>
+            </add>
+        </operation>
+    </file>
+</modification>
