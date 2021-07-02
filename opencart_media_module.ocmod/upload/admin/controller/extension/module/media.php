@@ -125,7 +125,10 @@ class ControllerExtensionModuleMedia extends Controller
     // 
     public function install()
 	{
-		$this->db->query("ALTER TABLE `oc_product` ADD COLUMN `audio_id` INT(11) NULL AFTER `date_modified`;");
+		$query = $this->db->query("SHOW COLUMNS FROM `oc_product` LIKE 'audio_id'");
+		if(!$query->rows) {
+			$this->db->query("ALTER TABLE `oc_product` ADD COLUMN `audio_id` INT(11) NULL AFTER `date_modified`");
+		}
 		$this->load->model('setting/setting');
         $this->load->model('setting/module');
 		$this->model_setting_setting->editSetting('module_media', ['module_media' => 1]);

@@ -11,7 +11,7 @@
         Admin View
 
      -->
-     <file path="admin/view/template/catalog/product_form.twig">
+    <file path="admin/view/template/catalog/product_form.twig">
         <operation>
             <search>
                 <![CDATA[
@@ -24,19 +24,14 @@
                     <li><a href="#tab-media" data-toggle="tab">{{ tab_media }}</a></li>
                 ]]>
             </add>
-            
-        </operation>
-    </file>
 
+        </operation>
+    </file> 
     <file path="admin/view/template/catalog/product_form.twig">
         <operation>
             <search>
                 <![CDATA[
-            </div>
-        </form>
-      </div>
-    </div>
-  </div>
+                <div class="tab-pane" id="tab-design">
                 ]]>
             </search>
 
@@ -58,7 +53,7 @@
                   </div>            
                     ]]>
             </add>
-            
+
         </operation>
     </file>
 
@@ -78,15 +73,11 @@
                         $.ajax({
                             url: 'index.php?route=catalog/media/autocomplete&user_token={{ user_token }}&filter_name=' + encodeURIComponent(request),
                             dataType: 'json',
-                      error: function(errMsg) {
-                              console.log(JSON.stringify(errMsg));
-                      },
                             success: function(json) {
-                        console.log(json)
                                 response($.map(json, function(item) {
                                     return {
                                         label: item['name'],
-                                        value: item['download_id']
+                                        value: item['audio_id']
                                     }
                                 }));
                             }
@@ -95,9 +86,11 @@
                     'select': function(item) {
                         $('input[name=\'audio\']').val(item['label']);
                         $('input[name=\'audio_id\']').val(item['value']);
-                    }                ]]>
+                    }      
+                });
+                ]]>
             </add>
-            
+
         </operation>
     </file>
 
@@ -120,21 +113,71 @@
                     $_['entry_audio']            = 'Audio';
                 ]]>
             </add>
-            
+
+        </operation>
+    </file>
+    <file path="admin/language/en-gb/en-gb.php">
+        <operation>
+            <search>
+                <![CDATA[
+                $_['tab_mail']                      = 'Mail';
+                ]]>
+            </search>
+
+            <add position="after">
+                <![CDATA[
+                $_['tab_media']                      = 'Media';
+                ]]>
+            </add>
+
         </operation>
     </file>
     <!-- 
     
 
         Admin Model 
-    
+        add audio_id when creating product details
+
 
     -->
-    <file path="admin/model/setting/setting.php">
+    <file path="admin/model/catalog/product.php">
         <operation>
             <search>
                 <![CDATA[
-                    if (isset($this->request->post['audio_id'])) {
+                $this->db->query("INSERT INTO " . DB_PREFIX . "product SET model = '" . $this->db->escape($data['model']) . "', sku = '" . $this->db->escape($data['sku']) . "', upc = '" . $this->db->escape($data['upc']) . "', ean = '" . $this->db->escape($data['ean']) . "', jan = '" . $this->db->escape($data['jan']) . "', isbn = '" . $this->db->escape($data['isbn']) . "', mpn = '" . $this->db->escape($data['mpn']) . "', location = '" . $this->db->escape($data['location']) . "', quantity = '" . (int)$data['quantity'] . "', minimum = '" . (int)$data['minimum'] . "', subtract = '" . (int)$data['subtract'] . "', stock_status_id = '" . (int)$data['stock_status_id'] . "', date_available = '" . $this->db->escape($data['date_available']) . "', manufacturer_id = '" . (int)$data['manufacturer_id'] . "', shipping = '" . (int)$data['shipping'] . "', price = '" . (float)$data['price'] . "', points = '" . (int)$data['points'] . "', weight = '" . (float)$data['weight'] . "', weight_class_id = '" . (int)$data['weight_class_id'] . "', length = '" . (float)$data['length'] . "', width = '" . (float)$data['width'] . "', height = '" . (float)$data['height'] . "', length_class_id = '" . (int)$data['length_class_id'] . "', status = '" . (int)$data['status'] . "', tax_class_id = '" . (int)$data['tax_class_id'] . "', sort_order = '" . (int)$data['sort_order'] . "', date_added = NOW(), date_modified = NOW()");
+                ]]>
+            </search>
+            <add position="replace">
+            <![CDATA[ 
+            $this->db->query("INSERT INTO " . DB_PREFIX . "product SET model = '" . $this->db->escape($data['model']) . "', sku = '" . $this->db->escape($data['sku']) . "', upc = '" . $this->db->escape($data['upc']) . "', ean = '" . $this->db->escape($data['ean']) . "', jan = '" . $this->db->escape($data['jan']) . "', isbn = '" . $this->db->escape($data['isbn']) . "', mpn = '" . $this->db->escape($data['mpn']) . "', location = '" . $this->db->escape($data['location']) . "', quantity = '" . (int)$data['quantity'] . "', minimum = '" . (int)$data['minimum'] . "', subtract = '" . (int)$data['subtract'] . "', stock_status_id = '" . (int)$data['stock_status_id'] . "', date_available = '" . $this->db->escape($data['date_available']) . "', manufacturer_id = '" . (int)$data['manufacturer_id'] . "', audio_id = '" . (int)$data['audio_id'] . "', shipping = '" . (int)$data['shipping'] . "', price = '" . (float)$data['price'] . "', points = '" . (int)$data['points'] . "', weight = '" . (float)$data['weight'] . "', weight_class_id = '" . (int)$data['weight_class_id'] . "', length = '" . (float)$data['length'] . "', width = '" . (float)$data['width'] . "', height = '" . (float)$data['height'] . "', length_class_id = '" . (int)$data['length_class_id'] . "', status = '" . (int)$data['status'] . "', tax_class_id = '" . (int)$data['tax_class_id'] . "', sort_order = '" . (int)$data['sort_order'] . "', date_added = NOW(), date_modified = NOW()");
+            ]]>
+            </add>
+        </operation>
+    </file>
+    <!-- 
+
+        Admin Controller
+        add audio_id when editing product details
+
+     -->
+    <file path="admin/model/catalog/product.php">
+        <operation>
+            <search>
+                <![CDATA[
+                $this->db->query("UPDATE " . DB_PREFIX . "product SET model = '" . $this->db->escape($data['model']) . "', sku = '" . $this->db->escape($data['sku']) . "', upc = '" . $this->db->escape($data['upc']) . "', ean = '" . $this->db->escape($data['ean']) . "', jan = '" . $this->db->escape($data['jan']) . "', isbn = '" . $this->db->escape($data['isbn']) . "', mpn = '" . $this->db->escape($data['mpn']) . "', location = '" . $this->db->escape($data['location']) . "', quantity = '" . (int)$data['quantity'] . "', minimum = '" . (int)$data['minimum'] . "', subtract = '" . (int)$data['subtract'] . "', stock_status_id = '" . (int)$data['stock_status_id'] . "', date_available = '" . $this->db->escape($data['date_available']) . "', manufacturer_id = '" . (int)$data['manufacturer_id'] . "', shipping = '" . (int)$data['shipping'] . "', price = '" . (float)$data['price'] . "', points = '" . (int)$data['points'] . "', weight = '" . (float)$data['weight'] . "', weight_class_id = '" . (int)$data['weight_class_id'] . "', length = '" . (float)$data['length'] . "', width = '" . (float)$data['width'] . "', height = '" . (float)$data['height'] . "', length_class_id = '" . (int)$data['length_class_id'] . "', status = '" . (int)$data['status'] . "', tax_class_id = '" . (int)$data['tax_class_id'] . "', sort_order = '" . (int)$data['sort_order'] . "', date_modified = NOW() WHERE product_id = '" . (int)$product_id . "'");
+                ]]>
+            </search>
+            <add position="replace">
+            <![CDATA[ 
+            $this->db->query("UPDATE " . DB_PREFIX . "product SET model = '" . $this->db->escape($data['model']) . "', sku = '" . $this->db->escape($data['sku']) . "', upc = '" . $this->db->escape($data['upc']) . "', ean = '" . $this->db->escape($data['ean']) . "', jan = '" . $this->db->escape($data['jan']) . "', isbn = '" . $this->db->escape($data['isbn']) . "', mpn = '" . $this->db->escape($data['mpn']) . "', location = '" . $this->db->escape($data['location']) . "', quantity = '" . (int)$data['quantity'] . "', minimum = '" . (int)$data['minimum'] . "', subtract = '" . (int)$data['subtract'] . "', stock_status_id = '" . (int)$data['stock_status_id'] . "', date_available = '" . $this->db->escape($data['date_available']) . "', audio_id = '" . (int)$data['audio_id'] . "', manufacturer_id = '" . (int)$data['manufacturer_id'] . "', shipping = '" . (int)$data['shipping'] . "', price = '" . (float)$data['price'] . "', points = '" . (int)$data['points'] . "', weight = '" . (float)$data['weight'] . "', weight_class_id = '" . (int)$data['weight_class_id'] . "', length = '" . (float)$data['length'] . "', width = '" . (float)$data['width'] . "', height = '" . (float)$data['height'] . "', length_class_id = '" . (int)$data['length_class_id'] . "', status = '" . (int)$data['status'] . "', tax_class_id = '" . (int)$data['tax_class_id'] . "', sort_order = '" . (int)$data['sort_order'] . "', date_modified = NOW() WHERE product_id = '" . (int)$product_id . "'");            ]]>
+            </add>
+        </operation>
+    </file>
+    <file path="admin/controller/catalog/product.php">
+        <operation>
+            <search>
+                <![CDATA[
+                    if (isset($this->request->post['product_related'])) {
                 ]]>
             </search>
             <add position="before">
