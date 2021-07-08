@@ -37,7 +37,7 @@
 
             <add position="before">
                 <![CDATA[
-                {# 
+                  {# 
             
                     Media
       
@@ -48,6 +48,20 @@
                       <div class="col-sm-10">
                         <input type="text" name="audio" value="{{ audio }}" placeholder="{{ entry_audio }}" id="input-preview-audio" class="form-control"/> 
                         <input type="hidden" name="audio_id" value="{{ audio_id }}"/>
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label class="col-sm-2 control-label" for="input-video"><span data-toggle="tooltip" title="{{ help_video }}">Video</span></label>
+                      <div class="col-sm-10">
+                        <input type="text" name="video" value="" placeholder="{{ entry_download }}" id="input-video" class="form-control"/>
+                        <div id="product-video" class="well well-sm" style="height: 150px; overflow: auto;"> 
+                          {% for product_video in product_videos %}
+                            <div id="product-video{{ product_video.video_id }}">
+                              <i class="fa fa-minus-circle"></i> {{ product_video.name }}
+                              <input type="hidden" name="product_video[]" value="{{ product_video.video_id }}"/>
+                            </div>
+                          {% endfor %}</div>
                       </div>
                     </div>
                   </div>            
@@ -67,6 +81,7 @@
 
             <add position="before">
                 <![CDATA[
+
                 // Audio
                 $('input[name=\'audio\']').autocomplete({
                     'source': function(request, response) {
@@ -77,7 +92,7 @@
                                 response($.map(json, function(item) {
                                     return {
                                         label: item['name'],
-                                        value: item['audio_id']
+                                        value: item['download_id']
                                     }
                                 }));
                             }
@@ -88,6 +103,47 @@
                         $('input[name=\'audio_id\']').val(item['value']);
                     }      
                 });
+
+                let lastQuery;
+                // Videos
+                $('input[name=\'video\']').autocomplete({
+                  'source': function(request, response) {
+
+                    if(lastQuery === request) {
+                      return
+                    }
+                    lastQuery = request;
+                    
+                    if (request.length < 4 && request != '') {
+                      return;
+                    }
+
+                    $.ajax({
+                      url: 'index.php?route=catalog/media/cloudflareAutocomplete&user_token={{ user_token }}&filter_name=' + encodeURIComponent(request),
+                      dataType: 'json',
+                      success: function(json) {
+                        response($.map(json, function(item) {
+                          return {
+                            label: item['name'],
+                            value: item['video_id']
+                          }
+                        }));
+                      }
+                    });
+                  },
+                  'select': function(item) {
+                    $('input[name=\'video\']').val('');
+
+                    $('#product-video' + item['value']).remove();
+
+                    $('#product-video').append('<div id="product-video' + item['value'] + '"><i class="fa fa-minus-circle"></i> ' + item['label'] + '<input type="hidden" name="product_video[]" value="' + item['value'] + '" /></div>');
+                  }
+                });
+
+                $('#product-video').delegate('.fa-minus-circle', 'click', function() {
+                  $(this).parent().remove();
+                });
+                
                 ]]>
             </add>
 
@@ -111,6 +167,7 @@
             <add position="after">
                 <![CDATA[
                     $_['entry_audio']            = 'Audio';
+                    $_['help_video']             = 'Video File';
                 ]]>
             </add>
 
@@ -154,12 +211,6 @@
             </add>
         </operation>
     </file>
-    <!-- 
-
-        Admin Controller
-        add audio_id when editing product details
-
-     -->
     <file path="admin/model/catalog/product.php">
         <operation>
             <search>
@@ -173,6 +224,89 @@
             </add>
         </operation>
     </file>
+    <file path="admin/model/catalog/product.php">
+        <operation>
+            <search>
+                <![CDATA[
+                public function getProductStores($product_id) {
+                ]]>
+            </search>
+            <add position="before">
+                <![CDATA[ 
+                public function getProductVideos($product_id) {
+                    $product_video_data = array();
+            
+                    $query = $this->db->query("SELECT * FROM " . DB_PREFIX . "product_to_video WHERE product_id = '" . (int)$product_id . "'");
+            
+                    foreach ($query->rows as $result) {
+                        $product_video_data[] = $result['video_id'];
+                    }
+            
+                    return $product_video_data;
+                }            
+                ]]>
+            </add>
+        </operation>
+    </file>
+    <file path="admin/model/catalog/product.php">
+        <operation>
+            <search>
+                <![CDATA[
+                public function deleteProduct($product_id) {
+                ]]>
+            </search>
+            <add position="after">
+                <![CDATA[ 
+                    $this->db->query("DELETE FROM " . DB_PREFIX . "product_to_video WHERE product_id = '" . (int)$product_id . "'");           
+                ]]>
+            </add>
+        </operation>
+    </file>
+    <file path="admin/model/catalog/product.php">
+        <operation>
+            <search>
+                <![CDATA[
+                if (!empty($data['product_attribute'])) {
+                ]]>
+            </search>
+            <add position="before">
+                <![CDATA[ 
+                $this->db->query("DELETE FROM " . DB_PREFIX . "product_to_video WHERE product_id = '" . (int)$product_id . "'");
+
+
+                if (isset($data['product_video'])) {
+                    foreach ($data['product_video'] as $video_id) {
+                        $this->db->query("INSERT INTO " . DB_PREFIX . "product_to_video SET product_id = '" . (int)$product_id . "', video_id = '" . $video_id . "'");
+                    }
+                }
+                ]]>
+            </add>
+        </operation>
+    </file>
+    <file path="admin/model/catalog/product.php">
+        <operation>
+            <search>
+                <![CDATA[
+                $product_id = $this->db->getLastId();
+                ]]>
+            </search>
+            <add position="after">
+                <![CDATA[ 
+                if (isset($data['product_video'])) {
+                    foreach ($data['product_video'] as $video_id) {
+                        $this->db->query("INSERT INTO " . DB_PREFIX . "product_to_video SET product_id = '" . (int)$product_id . "', video_id = '" . $video_id . "'");
+                    }
+                }
+                ]]>
+            </add>
+        </operation>
+    </file>
+    <!-- 
+
+        Admin Controller
+        add audio_id when editing product details
+
+     -->
     <file path="admin/controller/catalog/product.php">
         <operation>
             <search>
@@ -203,6 +337,29 @@
                     }
                 } else {
                     $data['audio'] = '';
+                }
+
+                // Videos
+                $this->load->model('catalog/media');
+
+                if (isset($this->request->post['product_videos'])) {
+                    $product_videos = $this->request->post['product_videos'];
+                } elseif (isset($this->request->get['product_id'])) {
+                    $product_videos = $this->model_catalog_product->getProductVideos($this->request->get['product_id']);
+                } else {
+                    $product_videos = array();
+                }
+
+
+                foreach ($product_videos as $video_id) {
+                    $video_info = $this->model_catalog_media->getVideo($video_id);
+
+                    if ($video_info) {
+                        $data['product_videos'][] = array(
+                            'video_id'    => $video_info['video_id'],
+                            'name'        => $video_info['name']
+                        );
+                    }
                 }
 
                 
