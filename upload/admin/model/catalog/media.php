@@ -64,9 +64,12 @@ class ModelCatalogMedia extends Model {
 			if($response !== null) {
 				$ret = json_decode($response, true);
 
-				foreach($ret['result'] as $file) {
-					$video_list[] = $this->formatVideosResponse($file);
+				if($ret['result'] != null) {
+					foreach($ret['result'] as $file) {
+						$video_list[] = $this->formatVideosResponse($file);
+					}
 				}
+				
 			}
 
 			return $video_list;
@@ -120,7 +123,7 @@ class ModelCatalogMedia extends Model {
 			'video_id'     			=> $file['uid'],
 			'thumbnail'				=> $file['thumbnail'],
 			'status_state' 			=> $file['status']['state'],
-			'status_percentage' 	=> $file['status']['pctComplete'],
+			'status_percentage' 	=> (isset($file['status']) ? $file['status']['pctComplete'] : 0),
 			'duration' 				=> $file['duration'],
 			'created'				=> $file['created'],
 			'name'					=> $file['meta']['name'],

@@ -18,6 +18,7 @@ class ControllerExtensionModuleMedia extends Controller
         $this->load->language('extension/module/media');
         $this->load->model('setting/setting');
 
+		$url = '';
 	
         if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validate()) {
 			
@@ -145,23 +146,24 @@ class ControllerExtensionModuleMedia extends Controller
 
     }
 
-	
-
     // 
     // install
     // 
     public function install()
 	{
-		$query = $this->db->query("SHOW COLUMNS FROM `oc_product` LIKE 'audio_id'");
-		if(!$query->rows) {
-			$this->db->query("ALTER TABLE " . DB_PREFIX . " ADD COLUMN `audio_id` INT(11) NULL AFTER `date_modified`");
+		if(!$this->db->query("SHOW COLUMNS FROM " . DB_PREFIX . "product LIKE 'audio_id'")->rows) {
+			$this->db->query("ALTER TABLE " . DB_PREFIX . "product ADD COLUMN `audio_id` INT(11) NULL AFTER `date_modified`");
+		}
+
+		if(!$this->db->query("SHOW COLUMNS FROM " . DB_PREFIX . "product LIKE 'single_purchase'")->rows) {
+			$this->db->query("ALTER TABLE " . DB_PREFIX . "product ADD COLUMN `single_purchase` INT NULL DEFAULT '0' AFTER `audio_id`");
 		}
 		
 		$this->db->query("INSERT INTO " . DB_PREFIX . "setting (`code`, `key`) VALUES ('module_media', 'media_cloudflare_account_id')");
 		$this->db->query("INSERT INTO " . DB_PREFIX . "setting (`code`, `key`) VALUES ('module_media', 'media_cloudflare_token')");
 		$this->db->query("INSERT INTO " . DB_PREFIX . "setting (`code`, `key`, `value`) VALUES ('module_media', 'module_media_status', '0')");
 		$this->db->query("CREATE TABLE IF NOT EXISTS " . DB_PREFIX . "product_to_video (`product_id` int(11) DEFAULT NULL, `video_id` text DEFAULT NULL)");
-		
+
 	}
 
     
@@ -173,6 +175,15 @@ class ControllerExtensionModuleMedia extends Controller
 		$this->load->model('setting/setting');
 		$this->model_setting_setting->deleteSetting('module_media');
 
+		$query = $this->db->query("SHOW COLUMNS FROM " . DB_PREFIX . "product LIKE 'audio_id'");
+		if($query->rows) {
+			$this->db->query("ALTER TABLE " . DB_PREFIX . "product DROP COLUMN `audio_id`");
+		}
+
+		$query = $this->db->query("SHOW COLUMNS FROM " . DB_PREFIX . "product LIKE 'single_purchase'");
+		if($query->rows) {
+			$this->db->query("ALTER TABLE " . DB_PREFIX . "product DROP COLUMN `single_purchase`");
+		}
 	}
 
 
@@ -183,6 +194,7 @@ class ControllerExtensionModuleMedia extends Controller
 
 		$this->document->setTitle($this->language->get('heading_title_add'));
 
+		$url = '';
 		// cancel button url
 		$data['cancel'] = $this->url->link('extension/module/media', 'user_token=' . $this->session->data['user_token'] . $url, true);
 
@@ -298,7 +310,7 @@ class ControllerExtensionModuleMedia extends Controller
 			$store_url = $this->model_setting_setting->getSettingValue('config_ssl', $store_id);
 		}
 
-		
+		$url = '';
 		$url = $store_url . 'index.php?route=catalog/media/video&id=' . $this->request->post['id'];
 		
 
