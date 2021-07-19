@@ -143,4 +143,16 @@ class ModelCatalogMedia extends Model {
 		return $product_video_data;
 	}
 
+	public function getProductFullVideos($product_id) {
+		$product_video_data = array();
+
+		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "product_to_video_full WHERE product_id = '" . (int)$product_id . "'");
+
+		foreach ($query->rows as $result) {
+			$product_video_data[] = $result['video_id'];
+		}
+
+		return $product_video_data;
+	}
+
 }
