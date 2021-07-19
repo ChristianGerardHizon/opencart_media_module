@@ -85,18 +85,35 @@
                     </div>
 
                     <div class="form-group">
-                      <label class="col-sm-2 control-label" for="input-video"><span data-toggle="tooltip" title="{{ help_video }}">Video</span></label>
-                      <div class="col-sm-10">
-                        <input type="text" name="video" value="" placeholder="{{ entry_download }}" id="input-video" class="form-control"/>
-                        <div id="product-video" class="well well-sm" style="height: 150px; overflow: auto;"> 
-                          {% for product_video in product_videos %}
-                            <div id="product-video{{ product_video.video_id }}">
-                              <i class="fa fa-minus-circle"></i> {{ product_video.name }}
-                              <input type="hidden" name="product_video[]" value="{{ product_video.video_id }}"/>
+                        <label class="col-sm-2 control-label" for="input-video"><span data-toggle="tooltip" title="{{ help_video }}">{{entry_video}}</span></label>
+                        <div class="col-sm-10">
+                            <input type="text" name="video" value="" placeholder="{{ entry_video }}" id="input-video" class="form-control"/>
+                            <div id="product-video" class="well well-sm" style="height: 150px; overflow: auto;"> 
+                            {% for product_video in product_videos %}
+                                <div id="product-video{{ product_video.video_id }}">
+                                <i class="fa fa-minus-circle"></i> {{ product_video.name }}
+                                <input type="hidden" name="product_video[]" value="{{ product_video.video_id }}"/>
+                                </div>
+                            {% endfor %}
                             </div>
-                          {% endfor %}</div>
-                      </div>
+                        </div>
                     </div>
+
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label" for="input-video-full"><span data-toggle="tooltip" title="{{ help_video_full }}">{{entry_video_full}}</span></label>
+                        <div class="col-sm-10">
+                          <input type="text" name="video-full" value="" placeholder="{{ entry_video_full }}" id="input-video-full" class="form-control"/>
+                            <div id="product-video-full" class="well well-sm" style="height: 150px; overflow: auto;"> 
+                                {% for product_video in product_videos_full %}
+                                <div id="product-video-full{{ product_video.video_id }}">
+                                    <i class="fa fa-minus-circle"></i> {{ product_video.name }}
+                                    <input type="hidden" name="product_video_full[]" value="{{ product_video.video_id }}"/>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                      </div>
+
                   </div>            
                     ]]>
             </add>
@@ -176,6 +193,48 @@
                 $('#product-video').delegate('.fa-minus-circle', 'click', function() {
                   $(this).parent().remove();
                 });
+
+
+                // Video Full
+                let lastQueryFull;
+                // Videos
+                $('input[name=\'video-full\']').autocomplete({
+                  'source': function(request, response) {
+
+                    if(lastQueryFull === request) {
+                      return
+                    }
+                    lastQueryFull = request;
+                    
+                    if (request.length < 4 && request != '') {
+                      return;
+                    }
+
+                    $.ajax({
+                      url: 'index.php?route=catalog/media/cloudflareAutocomplete&user_token={{ user_token }}&filter_name=' + encodeURIComponent(request),
+                      dataType: 'json',
+                      success: function(json) {
+                        response($.map(json, function(item) {
+                          return {
+                            label: item['name'],
+                            value: item['video_id']
+                          }
+                        }));
+                      }
+                    });
+                  },
+                  'select': function(item) {
+                    $('input[name=\'video-full\']').val('');
+
+                    $('#product-video-full' + item['value']).remove();
+
+                    $('#product-video-full').append('<div id="product-video-full' + item['value'] + '"><i class="fa fa-minus-circle"></i> ' + item['label'] + '<input type="hidden" name="product_video_full[]" value="' + item['value'] + '" /></div>');
+                  }
+                });
+
+                $('#product-video-full').delegate('.fa-minus-circle', 'click', function() {
+                  $(this).parent().remove();
+                });
                 
                 ]]>
             </add>
@@ -200,8 +259,11 @@
             <add position="after">
                 <![CDATA[
                     $_['entry_audio']            = 'Audio';
+                    $_['entry_video']            = 'Preview Video';
+                    $_['entry_video_full']       = 'Full Video';
                     $_['entry_single_purchase']  = 'Single Purchase';
-                    $_['help_video']             = 'Video File';
+                    $_['help_video']             = 'Preview Video';
+                    $_['help_video_full']        = 'Full Video';
                 ]]>
             </add>
 
@@ -278,7 +340,19 @@
                     }
             
                     return $product_video_data;
-                }            
+                }
+                
+                public function getProductFullVideos($product_id) {
+                    $product_video_data = array();
+            
+                    $query = $this->db->query("SELECT * FROM " . DB_PREFIX . "product_to_video_full WHERE product_id = '" . (int)$product_id . "'");
+            
+                    foreach ($query->rows as $result) {
+                        $product_video_data[] = $result['video_id'];
+                    }
+            
+                    return $product_video_data;
+                }
                 ]]>
             </add>
         </operation>
@@ -314,6 +388,12 @@
                         $this->db->query("INSERT INTO " . DB_PREFIX . "product_to_video SET product_id = '" . (int)$product_id . "', video_id = '" . $video_id . "'");
                     }
                 }
+
+                if (isset($data['product_video_full'])) {
+                    foreach ($data['product_video_full'] as $video_id) {
+                        $this->db->query("INSERT INTO " . DB_PREFIX . "product_to_video_full SET product_id = '" . (int)$product_id . "', video_id = '" . $video_id . "'");
+                    }
+                }
                 ]]>
             </add>
         </operation>
@@ -330,6 +410,12 @@
                 if (isset($data['product_video'])) {
                     foreach ($data['product_video'] as $video_id) {
                         $this->db->query("INSERT INTO " . DB_PREFIX . "product_to_video SET product_id = '" . (int)$product_id . "', video_id = '" . $video_id . "'");
+                    }
+                }
+
+                if (isset($data['product_video_full'])) {
+                    foreach ($data['product_video_full'] as $video_id) {
+                        $this->db->query("INSERT INTO " . DB_PREFIX . "product_to_video_full SET product_id = '" . (int)$product_id . "', video_id = '" . $video_id . "'");
                     }
                 }
                 ]]>
@@ -404,8 +490,30 @@
                         );
                     }
                 }
-
                 
+
+                // Full Vidoes
+                $this->load->model('catalog/media');
+
+                if (isset($this->request->post['product_videos_full'])) {
+                    $product_videos_full = $this->request->post['product_videos_full'];
+                } elseif (isset($this->request->get['product_id'])) {
+                    $product_videos_full = $this->model_catalog_product->getProductFullVideos($this->request->get['product_id']);
+                } else {
+                    $product_videos_full = array();
+                }
+
+
+                foreach ($product_videos_full as $video_id) {
+                    $video_info = $this->model_catalog_media->getVideo($video_id);
+
+                    if ($video_info) {
+                        $data['product_videos_full'][] = array(
+                            'video_id'    => $video_info['video_id'],
+                            'name'        => $video_info['name']
+                        );
+                    }
+                }
                 ]]>
             </add>
         </operation>
