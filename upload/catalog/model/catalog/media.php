@@ -7,7 +7,7 @@ class ModelCatalogMedia extends Model {
 		return $query->row;
 	}
 
-		//
+	//
 	// fetch cloudflare videos
 	//
 	public function getVideos($params = null) {

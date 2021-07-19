@@ -163,6 +163,8 @@ class ControllerExtensionModuleMedia extends Controller
 		$this->db->query("INSERT INTO " . DB_PREFIX . "setting (`code`, `key`) VALUES ('module_media', 'media_cloudflare_token')");
 		$this->db->query("INSERT INTO " . DB_PREFIX . "setting (`code`, `key`, `value`) VALUES ('module_media', 'module_media_status', '0')");
 		$this->db->query("CREATE TABLE IF NOT EXISTS " . DB_PREFIX . "product_to_video (`product_id` int(11) DEFAULT NULL, `video_id` text DEFAULT NULL)");
+		$this->db->query("CREATE TABLE IF NOT EXISTS " . DB_PREFIX . "subscription ( `customer_id` int(11) NOT NULL,  `end_date` datetime NOT NULL,  PRIMARY KEY (`customer_id`) )");
+		
 
 	}
 
